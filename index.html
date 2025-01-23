@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Coin Flip Simulator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: white;
+            background: #1a1a1a;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(
+                45deg, 
+                #1a1a1a,
+                #2c3e50,
+                #34495e,
+                #2c3e50,
+                #1a1a1a
+            );
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        .background-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 30%);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.07);
+            padding: 2rem;
+            border-radius: 25px;
+            backdrop-filter: blur(12px);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+            width: 90%;
+            margin: 15px;
+        }
+
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(45deg, #fff, #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-box {
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .stat-box h3 {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-box p {
+            font-size: 1.2em;
+        }
+
+        .coin-container {
+            perspective: 1500px;
+            margin: 20px auto;
+            transform-style: preserve-3d;
+        }
+
+        .coin {
+            width: min(200px, 50vw);
+            height: min(200px, 50vw);
+            position: relative;
+            transform-style: preserve-3d;
+            margin: 20px auto;
+            cursor: pointer;
+            transition: transform 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: rotateX(30deg);
+        }
+
+        .coin:hover {
+            transform: rotateX(30deg) scale(1.05);
+        }
+
+        .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0;
+            backface-visibility: hidden;
+            background: linear-gradient(135deg, #ffd700, #ffb700, #ffd700);
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.4),
+                0 0 30px rgba(255, 215, 0, 0.3);
+            border: min(12px, 3vw) solid #daa520;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .coin-face::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                transparent 45%, 
+                rgba(255,255,255,0.15) 48%,
+                rgba(255,255,255,0.3) 50%,
+                rgba(255,255,255,0.15) 52%,
+                transparent 55%);
+            animation: shine 5s infinite;
+        }
+
+        .coin-face.tails {
+            transform: rotateY(180deg);
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-200%) rotate(0deg); }
+            100% { transform: translateX(200%) rotate(0deg); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 15px 35px;
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button.reset {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .result-text {
+            font-size: 32px;
+            margin-top: 20px;
+            text-align: center;
+            min-height: 40px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #fff, #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .streak-indicator {
+            color: #ffd700;
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 20px;
+            text-align: center;
+            min-height: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Add responsive design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                padding: 10px;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .result-text {
+                font-size: 24px;
+            }
+
+            .streak-indicator {
+                font-size: 16px;
+            }
+        }
+
+        /* Add credits style */
+        .credits {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            font-size: 0.8em;
+            backdrop-filter: blur(5px);
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .credits:hover {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Add loading animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loading::after {
+            content: '🪙';
+            font-size: 40px;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+    <div class="container">
+        <h1>Professional Coin Flip</h1>
+        <div class="stats-container">
+            <div class="stat-box">
+                <h3>Heads</h3>
+                <p id="heads-count">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Tails</h3>
+                <p id="tails-count">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Win Streak</h3>
+                <p id="streak-count">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Win Rate</h3>
+                <p id="win-rate">0%</p>
+            </div>
+        </div>
+
+        <div class="coin-container">
+            <div class="coin" id="coin">
+                <div class="coin-face heads"></div>
+                <div class="coin-face tails"></div>
+            </div>
+        </div>
+        <div class="result-text" id="result"></div>
+        <div class="streak-indicator" id="streak-indicator"></div>
+        
+        <div class="controls">
+            <button onclick="flipCoin()" id="flip-button">Flip Coin</button>
+            <button onclick="resetStats()" class="reset">Reset Stats</button>
+        </div>
+    </div>
+
+    <a href="https://github.com/yourusername" target="_blank" class="credits">
+        Created by Vivek Singh ✨
+    </a>
+
+    <div class="loading" id="loading"></div>
+
+    <script>
+        let isFlipping = false;
+        let stats = {
+            heads: 0,
+            tails: 0,
+            streak: 0,
+            lastResult: null
+        };
+
+        // Add sound effects
+        const flipSound = new Audio('data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=');
+
+        // Preload coin faces
+        const preloadImages = () => {
+            const heads = new Image();
+            const tails = new Image();
+            heads.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="35" r="25" fill="#daa520"/><path d="M50 65 L50 90 M30 80 L70 80" stroke="#daa520" stroke-width="8"/></svg>');
+            tails.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="65" font-size="60" text-anchor="middle" fill="#daa520">T</text></svg>');
+        };
+
+        // Show loading screen
+        const showLoading = (show) => {
+            const loader = document.getElementById('loading');
+            if (show) {
+                loader.classList.add('active');
+            } else {
+                loader.classList.remove('active');
+            }
+        };
+
+        function updateStats() {
+            document.getElementById('heads-count').textContent = stats.heads;
+            document.getElementById('tails-count').textContent = stats.tails;
+            document.getElementById('streak-count').textContent = stats.streak;
+            const total = stats.heads + stats.tails;
+            const winRate = total > 0 ? ((Math.max(stats.heads, stats.tails) / total) * 100).toFixed(1) : 0;
+            document.getElementById('win-rate').textContent = `${winRate}%`;
+        }
+
+        function resetStats() {
+            stats = {
+                heads: 0,
+                tails: 0,
+                streak: 0,
+                lastResult: null
+            };
+            updateStats();
+            document.getElementById('streak-indicator').textContent = '';
+            document.getElementById('result').textContent = '';
+        }
+
+        function flipCoin() {
+            if (isFlipping) return;
+            isFlipping = true;
+            showLoading(true);
+
+            const coin = document.getElementById('coin');
+            const result = document.getElementById('result');
+            const flipButton = document.getElementById('flip-button');
+            
+            result.textContent = '';
+            flipButton.disabled = true;
+            flipSound.play();
+
+            // Random rotations and axis variation for more realistic effect
+            const rotationsX = Math.random() * 2 - 1;
+            const rotationsY = 3 + Math.floor(Math.random() * 3);
+            const isHeads = Math.random() < 0.5;
+            const degreesY = rotationsY * 360 + (isHeads ? 0 : 180);
+            
+            coin.style.transition = 'transform 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            coin.style.transform = `rotateX(${30 + rotationsX * 20}deg) rotateY(${degreesY}deg)`;
+
+            setTimeout(() => {
+                showLoading(false);
+                const currentResult = isHeads ? 'Heads' : 'Tails';
+                result.textContent = `${currentResult}!`;
+                
+                // Update stats with animation
+                if (isHeads) stats.heads++; else stats.tails++;
+                updateStatsWithAnimation();
+                
+                // Update streak with animation
+                updateStreak(currentResult);
+                
+                isFlipping = false;
+                flipButton.disabled = false;
+            }, 2500);
+        }
+
+        // Add smooth animation to stats updates
+        function updateStatsWithAnimation() {
+            const elements = ['heads-count', 'tails-count', 'streak-count', 'win-rate'];
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                element.style.transform = 'scale(1.2)';
+                element.style.transition = 'transform 0.3s ease';
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 300);
+            });
+            updateStats();
+        }
+
+        // Initialize
+        preloadImages();
+        updateStats();
+    </script>
+</body>
+</html> 
